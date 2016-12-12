@@ -12,6 +12,7 @@ import 'base_request.dart';
 import 'base_response.dart';
 import 'streamed_response.dart';
 import 'utils.dart';
+import 'http_headers/http_headers.dart';
 
 /// An HTTP response where the entire response body is known in advance.
 class Response extends BaseResponse {
@@ -27,49 +28,40 @@ class Response extends BaseResponse {
   String get body => _encodingForHeaders(headers).decode(bodyBytes);
 
   /// Creates a new HTTP response with a string body.
-  Response(
-      String body,
-      int statusCode,
+  Response(String body, int statusCode,
       {BaseRequest request,
-       Map<String, String> headers: const {},
-       bool isRedirect: false,
-       bool persistentConnection: true,
-       String reasonPhrase})
-    : this.bytes(
-        _encodingForHeaders(headers).encode(body),
-        statusCode,
-        request: request,
-        headers: headers,
-        isRedirect: isRedirect,
-        persistentConnection: persistentConnection,
-        reasonPhrase: reasonPhrase);
+      HttpClientHeaders headers,
+      bool isRedirect: false,
+      bool persistentConnection: true,
+      String reasonPhrase})
+      : this.bytes(_encodingForHeaders(headers).encode(body), statusCode,
+            request: request,
+            headers: headers,
+            isRedirect: isRedirect,
+            persistentConnection: persistentConnection,
+            reasonPhrase: reasonPhrase);
 
   /// Create a new HTTP response with a byte array body.
-  Response.bytes(
-      List<int> bodyBytes,
-      int statusCode,
+  Response.bytes(List<int> bodyBytes, int statusCode,
       {BaseRequest request,
-       Map<String, String> headers: const {},
-       bool isRedirect: false,
-       bool persistentConnection: true,
-       String reasonPhrase})
-    : bodyBytes = toUint8List(bodyBytes),
-      super(
-        statusCode,
-        contentLength: bodyBytes.length,
-        request: request,
-        headers: headers,
-        isRedirect: isRedirect,
-        persistentConnection: persistentConnection,
-        reasonPhrase: reasonPhrase);
+      HttpClientHeaders headers,
+      bool isRedirect: false,
+      bool persistentConnection: true,
+      String reasonPhrase})
+      : bodyBytes = toUint8List(bodyBytes),
+        super(statusCode,
+            contentLength: bodyBytes.length,
+            request: request,
+            headers: headers,
+            isRedirect: isRedirect,
+            persistentConnection: persistentConnection,
+            reasonPhrase: reasonPhrase) {}
 
   /// Creates a new HTTP response by waiting for the full body to become
   /// available from a [StreamedResponse].
   static Future<Response> fromStream(StreamedResponse response) {
     return response.stream.toBytes().then((body) {
-      return new Response.bytes(
-          body,
-          response.statusCode,
+      return new Response.bytes(body, response.statusCode,
           request: response.request,
           headers: response.headers,
           isRedirect: response.isRedirect,
@@ -82,14 +74,15 @@ class Response extends BaseResponse {
 /// Returns the encoding to use for a response with the given headers. This
 /// defaults to [LATIN1] if the headers don't specify a charset or
 /// if that charset is unknown.
-Encoding _encodingForHeaders(Map<String, String> headers) =>
-  encodingForCharset(_contentTypeForHeaders(headers).parameters['charset']);
+Encoding _encodingForHeaders(HttpClientHeaders headers) => encodingForCharset(
+    _contentTypeForHeaders(headers ?? new HttpClientHeaders()).parameters[
+        'charset']);
 
 /// Returns the [MediaType] object for the given headers's content-type.
 ///
 /// Defaults to `application/octet-stream`.
-MediaType _contentTypeForHeaders(Map<String, String> headers) {
-  var contentType = headers['content-type'];
+MediaType _contentTypeForHeaders(HttpClientHeaders headers) {
+  String contentType = headers.value('content-type');
   if (contentType != null) return new MediaType.parse(contentType);
   return new MediaType("application", "octet-stream");
 }

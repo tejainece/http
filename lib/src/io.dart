@@ -2,8 +2,11 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
-@MirrorsUsed(targets: const ['dart.io.HttpClient', 'dart.io.HttpException',
-  'dart.io.File'])
+@MirrorsUsed(targets: const [
+  'dart.io.HttpClient',
+  'dart.io.HttpException',
+  'dart.io.File'
+])
 import 'dart:mirrors';
 
 /// Whether `dart:io` is supported on this platform.

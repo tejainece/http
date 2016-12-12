@@ -3,10 +3,10 @@
 // BSD-style license that can be found in the LICENSE file.
 
 import 'dart:async';
-import 'dart:collection';
 
 import 'byte_stream.dart';
 import 'client.dart';
+import 'package:http/src/http_headers/http_headers.dart';
 import 'streamed_response.dart';
 import 'utils.dart';
 
@@ -24,6 +24,8 @@ abstract class BaseRequest {
 
   /// The URL to which the request will be sent.
   final Uri url;
+
+  final List<Cookie> cookies = new List<Cookie>();
 
   /// The size of the request body, in bytes.
   ///
@@ -71,21 +73,15 @@ abstract class BaseRequest {
     _maxRedirects = value;
   }
 
-  // TODO(nweiz): automatically parse cookies from headers
-
-  // TODO(nweiz): make this a HttpHeaders object
   /// The headers for this request.
-  final Map<String, String> headers;
+  final HttpClientHeaders headers = new HttpClientHeaders();
 
   /// Whether the request has been finalized.
   bool get finalized => _finalized;
   bool _finalized = false;
 
   /// Creates a new HTTP request.
-  BaseRequest(this.method, this.url)
-    : headers = new LinkedHashMap(
-        equals: (key1, key2) => key1.toLowerCase() == key2.toLowerCase(),
-        hashCode: (key) => key.toLowerCase().hashCode);
+  BaseRequest(this.method, this.url);
 
   /// Finalizes the HTTP request in preparation for it being sent. This freezes
   /// all mutable fields and returns a single-subscription [ByteStream] that
@@ -97,8 +93,19 @@ abstract class BaseRequest {
   /// freeze any additional mutable fields they add that don't make sense to
   /// change after the request headers are sent.
   ByteStream finalize() {
-    // TODO(nweiz): freeze headers
     if (finalized) throw new StateError("Can't finalize a finalized Request.");
+
+    // Add the cookies to the headers.
+    if (!cookies.isEmpty) {
+      StringBuffer sb = new StringBuffer();
+      for (int i = 0; i < cookies.length; i++) {
+        if (i > 0) sb.write("; ");
+        sb..write(cookies[i].name)..write("=")..write(cookies[i].value);
+      }
+      headers.add(HttpClientHeaders.COOKIE, sb.toString());
+    }
+
+    headers.finalize();
     _finalized = true;
     return null;
   }
@@ -115,9 +122,7 @@ abstract class BaseRequest {
     try {
       var response = await client.send(this);
       var stream = onDone(response.stream, client.close);
-      return new StreamedResponse(
-          new ByteStream(stream),
-          response.statusCode,
+      return new StreamedResponse(new ByteStream(stream), response.statusCode,
           contentLength: response.contentLength,
           request: response.request,
           headers: response.headers,

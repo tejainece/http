@@ -10,6 +10,7 @@ import 'package:http_parser/http_parser.dart';
 import 'base_request.dart';
 import 'byte_stream.dart';
 import 'utils.dart';
+import 'http_headers/http_headers.dart';
 
 /// An HTTP request where the entire request body is known in advance.
 class Request extends BaseRequest {
@@ -130,9 +131,9 @@ class Request extends BaseRequest {
 
   /// Creates a new HTTP request.
   Request(String method, Uri url)
-    : _defaultEncoding = UTF8,
-      _bodyBytes = new Uint8List(0),
-      super(method, url);
+      : _defaultEncoding = UTF8,
+        _bodyBytes = new Uint8List(0),
+        super(method, url);
 
   /// Freezes all mutable fields and returns a single-subscription [ByteStream]
   /// containing the request body.
@@ -144,13 +145,13 @@ class Request extends BaseRequest {
   /// The `Content-Type` header of the request (if it exists) as a
   /// [MediaType].
   MediaType get _contentType {
-    var contentType = headers['content-type'];
+    var contentType = headers.value(HttpClientHeaders.CONTENT_TYPE);
     if (contentType == null) return null;
     return new MediaType.parse(contentType);
   }
 
   set _contentType(MediaType value) {
-    headers['content-type'] = value.toString();
+    headers.set(HttpClientHeaders.CONTENT_TYPE, value.toString());
   }
 
   /// Throw an error if this request has been finalized.

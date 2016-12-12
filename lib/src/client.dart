@@ -23,6 +23,9 @@ import 'streamed_response.dart';
 /// another instance of [Client] and add functionality on top of that. This
 /// allows all classes implementing [Client] to be mutually composable.
 abstract class Client {
+  static const int DEFAULT_HTTP_PORT = 80;
+  static const int DEFAULT_HTTPS_PORT = 443;
+
   /// Creates a new client.
   ///
   /// Currently this will create an [IOClient] if `dart:io` is available and
@@ -63,8 +66,8 @@ abstract class Client {
   /// [encoding] defaults to [UTF8].
   ///
   /// For more fine-grained control over the request, use [send] instead.
-  Future<Response> post(url, {Map<String, String> headers, body,
-      Encoding encoding});
+  Future<Response> post(url,
+      {Map<String, String> headers, body, Encoding encoding});
 
   /// Sends an HTTP PUT request with the given headers and body to the given
   /// URL, which can be a [Uri] or a [String].
@@ -84,8 +87,8 @@ abstract class Client {
   /// [encoding] defaults to [UTF8].
   ///
   /// For more fine-grained control over the request, use [send] instead.
-  Future<Response> put(url, {Map<String, String> headers, body,
-      Encoding encoding});
+  Future<Response> put(url,
+      {Map<String, String> headers, body, Encoding encoding});
 
   /// Sends an HTTP PATCH request with the given headers and body to the given
   /// URL, which can be a [Uri] or a [String].
@@ -105,8 +108,8 @@ abstract class Client {
   /// [encoding] defaults to [UTF8].
   ///
   /// For more fine-grained control over the request, use [send] instead.
-  Future<Response> patch(url, {Map<String, String> headers, body,
-      Encoding encoding});
+  Future<Response> patch(url,
+      {Map<String, String> headers, body, Encoding encoding});
 
   /// Sends an HTTP DELETE request with the given headers to the given URL,
   /// which can be a [Uri] or a [String].

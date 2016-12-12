@@ -6,27 +6,28 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:http/src/utils.dart';
 import 'package:http/testing.dart';
 import 'package:unittest/unittest.dart';
+import 'package:http/src/http_headers/http_headers.dart';
 
 import 'utils.dart';
 
 void main() {
   test('handles a request', () {
     var client = new MockClient((request) {
+      HttpClientHeaders headers = new HttpClientHeaders();
+      headers.set('content-type', 'application/json');
       return new Future.value(new http.Response(
           JSON.encode(request.bodyFields), 200,
-          request: request, headers: {'content-type': 'application/json'}));
+          request: request, headers: headers));
     });
 
-    expect(client.post("http://example.com/foo", body: {
-      'field1': 'value1',
-      'field2': 'value2'
-    }).then((response) => response.body), completion(parse(equals({
-      'field1': 'value1',
-      'field2': 'value2'
-    }))));
+    expect(
+        client.post("http://example.com/foo", body: {
+          'field1': 'value1',
+          'field2': 'value2'
+        }).then((response) => response.body),
+        completion(parse(equals({'field1': 'value1', 'field2': 'value2'}))));
   });
 
   test('handles a streamed request', () {
@@ -45,7 +46,8 @@ void main() {
     var uri = Uri.parse("http://example.com/foo");
     var request = new http.Request("POST", uri);
     request.body = "hello, world";
-    var future = client.send(request)
+    var future = client
+        .send(request)
         .then(http.Response.fromStream)
         .then((response) => response.body);
     expect(future, completion(equals('Request body was "hello, world"')));

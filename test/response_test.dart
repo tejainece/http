@@ -6,6 +6,7 @@ import 'dart:async';
 
 import 'package:http/http.dart' as http;
 import 'package:unittest/unittest.dart';
+import 'package:http/src/http_headers/http_headers.dart';
 
 void main() {
   group('()', () {
@@ -16,15 +17,17 @@ void main() {
 
     test('sets bodyBytes', () {
       var response = new http.Response("Hello, world!", 200);
-      expect(response.bodyBytes, equals(
-          [72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33]));
+      expect(
+          response.bodyBytes,
+          equals(
+              [72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33]));
     });
 
     test('respects the inferred encoding', () {
-      var response = new http.Response("föøbãr", 200,
-          headers: {'content-type': 'text/plain; charset=iso-8859-1'});
-      expect(response.bodyBytes, equals(
-          [102, 246, 248, 98, 227, 114]));
+      HttpClientHeaders headers = new HttpClientHeaders();
+      headers.set('content-type', 'text/plain; charset=iso-8859-1');
+      var response = new http.Response("föøbãr", 200, headers: headers);
+      expect(response.bodyBytes, equals([102, 246, 248, 98, 227, 114]));
     });
   });
 
@@ -40,18 +43,21 @@ void main() {
     });
 
     test('respects the inferred encoding', () {
+      HttpClientHeaders headers = new HttpClientHeaders();
+      headers.set('content-type', 'text/plain; charset=iso-8859-1');
       var response = new http.Response.bytes([102, 246, 248, 98, 227, 114], 200,
-          headers: {'content-type': 'text/plain; charset=iso-8859-1'});
+          headers: headers);
       expect(response.body, equals("föøbãr"));
     });
   });
 
   group('.fromStream()', () {
     test('sets body', () {
-      var controller = new StreamController(sync: true);
-      var streamResponse = new http.StreamedResponse(
-          controller.stream, 200, contentLength: 13);
-      var future = http.Response.fromStream(streamResponse)
+      var controller = new StreamController<List<int>>(sync: true);
+      var streamResponse =
+          new http.StreamedResponse(controller.stream, 200, contentLength: 13);
+      var future = http.Response
+          .fromStream(streamResponse)
           .then((response) => response.body);
       expect(future, completion(equals("Hello, world!")));
 
@@ -61,10 +67,11 @@ void main() {
     });
 
     test('sets bodyBytes', () {
-      var controller = new StreamController(sync: true);
-      var streamResponse = new http.StreamedResponse(
-          controller.stream, 200, contentLength: 5);
-      var future = http.Response.fromStream(streamResponse)
+      var controller = new StreamController<List<int>>(sync: true);
+      var streamResponse =
+          new http.StreamedResponse(controller.stream, 200, contentLength: 5);
+      var future = http.Response
+          .fromStream(streamResponse)
           .then((response) => response.bodyBytes);
       expect(future, completion(equals([104, 101, 108, 108, 111])));
 

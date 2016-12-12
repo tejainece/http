@@ -20,9 +20,10 @@ void main() {
 
         return request.send();
       }).then((response) {
-        expect(UTF8.decodeStream(response.stream),
-            completion(parse(containsPair('headers',
-                containsPair('content-length', ['10'])))));
+        expect(
+            UTF8.decodeStream(response.stream),
+            completion(parse(containsPair(
+                'headers', containsPair('content-length', ['10'])))));
       }).whenComplete(stopServer);
     });
 
@@ -34,9 +35,10 @@ void main() {
 
         return request.send();
       }).then((response) {
-        expect(UTF8.decodeStream(response.stream),
-            completion(parse(containsPair('headers',
-                isNot(contains('content-length'))))));
+        expect(
+            UTF8.decodeStream(response.stream),
+            completion(parse(
+                containsPair('headers', isNot(contains('content-length'))))));
       }).whenComplete(stopServer);
     });
   });
@@ -52,5 +54,4 @@ void main() {
       expect(UTF8.decodeStream(response.stream), completion(equals('body')));
     }).whenComplete(stopServer);
   });
-
 }

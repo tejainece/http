@@ -46,9 +46,9 @@ class MultipartRequest extends BaseRequest {
 
   /// Creates a new [MultipartRequest].
   MultipartRequest(String method, Uri url)
-    : fields = {},
-      _files = <MultipartFile>[],
-      super(method, url);
+      : fields = {},
+        _files = <MultipartFile>[],
+        super(method, url);
 
   /// The list of files to upload for this request.
   List<MultipartFile> get files => _files;
@@ -59,15 +59,21 @@ class MultipartRequest extends BaseRequest {
     var length = 0;
 
     fields.forEach((name, value) {
-      length += "--".length + _BOUNDARY_LENGTH + "\r\n".length +
+      length += "--".length +
+          _BOUNDARY_LENGTH +
+          "\r\n".length +
           UTF8.encode(_headerForField(name, value)).length +
-          UTF8.encode(value).length + "\r\n".length;
+          UTF8.encode(value).length +
+          "\r\n".length;
     });
 
     for (var file in _files) {
-      length += "--".length + _BOUNDARY_LENGTH + "\r\n".length +
+      length += "--".length +
+          _BOUNDARY_LENGTH +
+          "\r\n".length +
           UTF8.encode(_headerForFile(file)).length +
-          file.length + "\r\n".length;
+          file.length +
+          "\r\n".length;
     }
 
     return length + "--".length + _BOUNDARY_LENGTH + "--\r\n".length;
@@ -83,7 +89,7 @@ class MultipartRequest extends BaseRequest {
   ByteStream finalize() {
     // TODO(nweiz): freeze fields and files
     var boundary = _boundaryString();
-    headers['content-type'] = 'multipart/form-data; boundary="$boundary"';
+    headers.set('content-type', 'multipart/form-data; boundary="$boundary"');
     super.finalize();
 
     var controller = new StreamController<List<int>>(sync: true);
@@ -106,7 +112,7 @@ class MultipartRequest extends BaseRequest {
       writeAscii('--$boundary\r\n');
       writeAscii(_headerForFile(file));
       return writeStreamToSink(file.finalize(), controller)
-        .then((_) => writeLine());
+          .then((_) => writeLine());
     }).then((_) {
       // TODO(nweiz): pass any errors propagated through this future on to
       // the stream. See issue 3657.
@@ -120,11 +126,80 @@ class MultipartRequest extends BaseRequest {
   /// All character codes that are valid in multipart boundaries. From
   /// http://tools.ietf.org/html/rfc2046#section-5.1.1.
   static const List<int> _BOUNDARY_CHARACTERS = const <int>[
-    39, 40, 41, 43, 95, 44, 45, 46, 47, 58, 61, 63, 48, 49, 50, 51, 52, 53, 54,
-    55, 56, 57, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
-    81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 97, 98, 99, 100, 101, 102, 103,
-    104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118,
-    119, 120, 121, 122
+    39,
+    40,
+    41,
+    43,
+    95,
+    44,
+    45,
+    46,
+    47,
+    58,
+    61,
+    63,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    97,
+    98,
+    99,
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119,
+    120,
+    121,
+    122
   ];
 
   /// Returns the header string for a field. The return value is guaranteed to
@@ -144,7 +219,7 @@ class MultipartRequest extends BaseRequest {
   /// contain only ASCII characters.
   String _headerForFile(MultipartFile file) {
     var header = 'content-type: ${file.contentType}\r\n'
-      'content-disposition: form-data; name="${_browserEncode(file.field)}"';
+        'content-disposition: form-data; name="${_browserEncode(file.field)}"';
 
     if (file.filename != null) {
       header = '$header; filename="${_browserEncode(file.filename)}"';
@@ -165,7 +240,8 @@ class MultipartRequest extends BaseRequest {
   /// Returns a randomly-generated multipart boundary string
   String _boundaryString() {
     var prefix = "dart-http-boundary-";
-    var list = new List<int>.generate(_BOUNDARY_LENGTH - prefix.length,
+    var list = new List<int>.generate(
+        _BOUNDARY_LENGTH - prefix.length,
         (index) =>
             _BOUNDARY_CHARACTERS[_random.nextInt(_BOUNDARY_CHARACTERS.length)],
         growable: false);

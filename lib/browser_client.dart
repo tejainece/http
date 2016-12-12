@@ -13,6 +13,7 @@ import 'src/base_request.dart';
 import 'src/byte_stream.dart';
 import 'src/exception.dart';
 import 'src/streamed_response.dart';
+import 'src/http_headers/http_headers.dart';
 
 // TODO(nweiz): Move this under src/, re-export from lib/http.dart, and use this
 // automatically from [new Client] once we can create an HttpRequest using
@@ -50,7 +51,13 @@ class BrowserClient extends BaseClient {
     _openHttpRequest(xhr, request.method, request.url.toString(), asynch: true);
     xhr.responseType = 'blob';
     xhr.withCredentials = withCredentials;
-    request.headers.forEach(xhr.setRequestHeader);
+    request.headers.forEach((String key, List<String> values) {
+      if (values == null || values.length == 0) {
+        return;
+      }
+
+      xhr.setRequestHeader(key, values.first);
+    });
 
     var completer = new Completer<StreamedResponse>();
     xhr.onLoad.first.then((_) {
@@ -61,12 +68,13 @@ class BrowserClient extends BaseClient {
 
       reader.onLoad.first.then((_) {
         var body = reader.result as Uint8List;
+        HttpClientHeaders headers = new HttpClientHeaders();
+        headers.addAllInMap(xhr.responseHeaders);
         completer.complete(new StreamedResponse(
-            new ByteStream.fromBytes(body),
-            xhr.status,
+            new ByteStream.fromBytes(body), xhr.status,
             contentLength: body.length,
             request: request,
-            headers: xhr.responseHeaders,
+            headers: headers,
             reasonPhrase: xhr.statusText));
       });
 
